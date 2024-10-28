@@ -14,13 +14,13 @@ int main() {
     // Initialize the input and sorted arrays
     for (int i = 0; i < N; i++) {
         h_input[i].key = rand() % (N / 2); // limiting the values to ensure key repetition
-        std::cout<<h_input[i].key<<" ";
+        // std::cout<<h_input[i].key<<" ";
         h_sorted_arr[i].key = -1;
         for (int j = 0; j < B; j++) {
             h_sorted_arr[i].occurrences[j] = -1;
         }
     }
-    std::cout<<std::endl;
+    // std::cout<<std::endl;
     KeyValuePair *d_input;
     KeyOccurences *d_sorted_arr;
     int *d_keys, *d_indices;
@@ -37,25 +37,28 @@ int main() {
 
     extractKeys<<<(N + 255) / 256, 256>>>(d_input, d_keys, d_indices, N);
     // peekMemory(d_keys, N);
+    // peekMemory(d_indices, N);
 
     sortKeys(d_keys, d_indices, N);
     // peekMemory(d_keys, N);
 
     buildSortedArray<<<(N + 255) / 256, 256>>>(d_keys, d_indices, d_sorted_arr, N);
+    cudaDeviceSynchronize();
+    peekMemory(d_sorted_arr, N);
 
     cudaMemcpy(h_sorted_arr, d_sorted_arr, N * sizeof(KeyOccurences), cudaMemcpyDeviceToHost);
 
     // Print results
-    for (int i = 0; i < N; i++) {
-        if (h_sorted_arr[i].key == -1) continue;
-        printf("Key: %d -> ", h_sorted_arr[i].key);
-        for (int j = 0; j < B; j++) {
-            if (h_sorted_arr[i].occurrences[j] !=-1) {
-                printf("%d ", h_sorted_arr[i].occurrences[j]);
-            }
-        }
-        printf("\n");
-    }
+    // for (int i = 0; i < N; i++) {
+    //     if (h_sorted_arr[i].key == -1) continue;
+    //     printf("Key: %d -> ", h_sorted_arr[i].key);
+    //     for (int j = 0; j < B; j++) {
+    //         if (h_sorted_arr[i].occurrences[j] !=-1) {
+    //             printf("%d ", h_sorted_arr[i].occurrences[j]);
+    //         }
+    //     }
+    //     printf("\n");
+    // }
 
     cudaFree(d_input);
     cudaFree(d_sorted_arr);
