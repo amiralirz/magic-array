@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.20)
 
-project(Indexing LANGUAGES CUDA CXX)
+project(indexing LANGUAGES CUDA CXX)
 
-add_executable(Indexing src/main.cu) 
+add_executable(indexing src/main.cu) 
 
-target_include_directories(Indexing PUBLIC include)
+target_include_directories(indexing PUBLIC include)
