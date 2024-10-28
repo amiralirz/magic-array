@@ -1,12 +1,15 @@
 #include<iostream>
 
+__global__ void insert(){
+    int arrayIndex = blockIdx.x * blockDim.x + threadIdx.x;
+}
+
 class MagicArray{
     private:
     long * dev_memory;        
     cudaError_t out;
 
     public:
-    MagicArray();
     MagicArray(int arraySize){
         out = cudaMalloc(&dev_memory ,arraySize * sizeof(long));
         if (out != cudaSuccess){
@@ -14,5 +17,12 @@ class MagicArray{
         }
     }
     
+    ~MagicArray(){
+        cudaFree(dev_memory);
+    }
+
+    cudaError_t Insert(long* dataPointer, int n){
+
+    }
 
 };
