@@ -51,10 +51,10 @@ __global__ void buildSortedArray(int *keys, int *indices, KeyOccurences *sorted_
         int index = indices[idx];
 
         // inserting to an existing bucekt
-        for (int i = 0; i < size; i++) { // TODO : use a different search method
+        for (int i = 0; i < size; i++) {
             if (sorted_arr[i].key == key) {
                 for (int j = 0; j < B; j++) {
-                    if (sorted_arr[i].occurrences[j] == -1) { // TODO : use atomice operations here
+                    if (sorted_arr[i].occurrences[j] == -1) {
                         if(atomicCAS(&sorted_arr[i].occurrences[j], -1, index) == -1)
                             return;
                     }
@@ -65,7 +65,8 @@ __global__ void buildSortedArray(int *keys, int *indices, KeyOccurences *sorted_
         // inserting to a new bucket if no exisiting buckets match
         for (int i = 0; i < size; i++) {
             if (sorted_arr[i].key == -1) {
-                if(atomicCAS(&sorted_arr[i].key, -1, key) == -1){                
+                int old = atomicCAS(&sorted_arr[i].key, -1, key);
+                if(old == -1 || old == key){ // if the old value is the same as key, we can insert too
                     for (int j = 0; j < B; j++) {
                         if (sorted_arr[i].occurrences[j] == -1) {
                             sorted_arr[i].occurrences[j] = index;

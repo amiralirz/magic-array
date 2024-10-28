@@ -46,20 +46,6 @@ int main() {
     cudaDeviceSynchronize();
     peekMemory(d_sorted_arr, N);
 
-    cudaMemcpy(h_sorted_arr, d_sorted_arr, N * sizeof(KeyOccurences), cudaMemcpyDeviceToHost);
-
-    // Print results
-    // for (int i = 0; i < N; i++) {
-    //     if (h_sorted_arr[i].key == -1) continue;
-    //     printf("Key: %d -> ", h_sorted_arr[i].key);
-    //     for (int j = 0; j < B; j++) {
-    //         if (h_sorted_arr[i].occurrences[j] !=-1) {
-    //             printf("%d ", h_sorted_arr[i].occurrences[j]);
-    //         }
-    //     }
-    //     printf("\n");
-    // }
-
     cudaFree(d_input);
     cudaFree(d_sorted_arr);
     cudaFree(d_keys);
