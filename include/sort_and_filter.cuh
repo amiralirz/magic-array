@@ -1,56 +1,60 @@
-// sort_and_filter.cu
-#include <cuda_runtime.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <cuda.h>
 #include <thrust/sort.h>
 #include <thrust/device_ptr.h>
-#include <thrust/pair.h>
 
-// Maximum number of occurrences per key
-const int b = 5;
 
-// Structure for each input element
-struct key_value_pair {
+#define N 100   // Array size
+#define B 4      // Max occurrences of each key
+
+typedef struct {
     int key;
-    char payload[150];  // Example payload
-};
+    char payload[256];
+} KeyValuePair;
 
-// Structure for each entry in the sorted array
-struct sorted_entry {
+typedef struct {
     int key;
-    int occurrences[b];  // Array to store indices of occurrences
-};
+    int occurrences[B];
+} SortedElement;
 
-// Comparator for sorting based on `key`
-struct KeyComparator {
-    __host__ __device__ bool operator()(const key_value_pair& a, const key_value_pair& b) const {
-        return a.key < b.key;
+__global__ void extractKeys(KeyValuePair *input, int *keys, int *indices, int size) {
+    int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (idx < size) {
+        keys[idx] = input[idx].key;
+        indices[idx] = idx;
     }
-};
+}
 
-// CUDA kernel to populate sorted_arr with unique keys and their occurrences
-__global__ void populate_sorted_arr(const key_value_pair* d_input, sorted_entry* d_sorted, int N) {
-    int idx = threadIdx.x + blockIdx.x * blockDim.x;
-    if (idx >= N) return;
+void sortKeys(int *d_keys, int *d_indices, int size) {
+    thrust::device_ptr<int> d_keys_ptr(d_keys);
+    thrust::device_ptr<int> d_indices_ptr(d_indices);
+    thrust::sort_by_key(d_keys_ptr, d_keys_ptr + size, d_indices_ptr);
+}
 
-    int key = d_input[idx].key;
-    int occurrence_index = 0;
+__global__ void buildSortedArray(int *keys, int *indices, SortedElement *sorted_arr, int size) {
+    int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (idx < size) {
+        int key = keys[idx];
+        int index = indices[idx];
 
-    // Only process the first occurrence of each unique key
-    if (idx == 0 || d_input[idx].key != d_input[idx - 1].key) {
-        // Initialize a new entry in `sorted_arr`
-        d_sorted[idx].key = key;
-        for (int i = 0; i < b; ++i) {
-            d_sorted[idx].occurrences[i] = -1;  // Initialize to -1 (unused slots)
+        for (int i = 0; i < size; i++) {
+            if (sorted_arr[i].key == key) {
+                for (int j = 0; j < B; j++) {
+                    if (sorted_arr[i].occurrences[j] == -1) {
+                        sorted_arr[i].occurrences[j] = index;
+                        return;
+                    }
+                }
+            }
         }
 
-        // Find occurrences of the key and store the original indices
-        for (int j = idx; j < N && d_input[j].key == key && occurrence_index < b; ++j) {
-            d_sorted[idx].occurrences[occurrence_index++] = j; // Store original index
+        for (int i = 0; i < size; i++) {
+            if (sorted_arr[i].key == -1) {
+                sorted_arr[i].key = key;
+                sorted_arr[i].occurrences[0] = index;
+                return;
+            }
         }
     }
-};
-
-// Helper function to sort the input array by key using Thrust
-void sort_input_by_key(key_value_pair* d_input, int N) {
-    thrust::device_ptr<key_value_pair> dev_ptr(d_input);
-    thrust::sort(dev_ptr, dev_ptr + N, KeyComparator());
-};
+}

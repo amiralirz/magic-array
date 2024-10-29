@@ -1,68 +1,62 @@
-#include <iostream>
+#include <stdio.h>
 #include <stdlib.h>
-
-#include <cuda_runtime.h>
+#include <cuda.h>
 #include "sort_and_filter.cuh"
 
 int main() {
-    const int N = 100;  // Example size of the input array
-    // key_value_pair h_input[N] = {
-    //     {5, "payload"}, {3, "payload"}, {5, "payload"}, {2, "payload"}, {3, "payload"},
-    //     {5, "payload"}, {4, "payload"}, {2, "payload"}, {1, "payload"}, {3, "payload"}
-    // };
+    KeyValuePair h_input[N];
+    SortedElement h_sorted_arr[N];
+
     srand(0);
-    // key_value_pair* h_input = (key_value_pair*) malloc(sizeof(key_value_pair) * N);
-    key_value_pair h_input[N];
-    int key;
-    for (int i=0; i<N; i++){
-        key = rand();
-        h_input[i].key = key; // Use dot notation to access struct members
-        sprintf(h_input[i].payload, "payload %d", key);
-    }
-    for (int i=0; i<N/2; i++){
-        h_input[i].key = h_input[N - i - 1].key;
-    }
-    for (int i=0; i<N; i++) printf("key: %d -> %s\n",h_input[i].key, h_input[i].payload);
-
-    // Allocate device memory and copy input data to device
-    key_value_pair* d_input;
-    cudaMalloc(&d_input, N * sizeof(key_value_pair));
-    cudaMemcpy(d_input, h_input, N * sizeof(key_value_pair), cudaMemcpyHostToDevice);
-
-    // Sort the input array by keys
-    sort_input_by_key(d_input, N);
-    cudaDeviceSynchronize();
-
-    // Allocate memory for the sorted array
-    sorted_entry* d_sorted;
-    cudaMalloc(&d_sorted, N * sizeof(sorted_entry));
-
-    // Launch the kernel to populate sorted_arr
-    int threadsPerBlock = 256;
-    int blocks = (N + threadsPerBlock - 1) / threadsPerBlock;
-    populate_sorted_arr<<<blocks, threadsPerBlock>>>(d_input, d_sorted, N);
-    cudaDeviceSynchronize();
-
-    // Copy results back to host and print them
-    sorted_entry* h_sorted = new sorted_entry[N];
-    cudaMemcpy(h_sorted, d_sorted, N * sizeof(sorted_entry), cudaMemcpyDeviceToHost);
-
-    for (int i = 0; i < N; ++i) {
-        if (h_sorted[i].occurrences[0] != -1) {
-            std::cout << "Key: " << h_sorted[i].key << " | Occurrences: ";
-            for (int j = 0; j < b; ++j) {
-                if (h_sorted[i].occurrences[j] != -1) {
-                    std::cout << h_sorted[i].occurrences[j] << " ";
-                }
-            }
-            std::cout << std::endl;
+    // Initialize the input and sorted arrays
+    for (int i = 0; i < N; i++) {
+        h_input[i].key = rand();
+        sprintf(h_input[i].payload, "payload %d", h_input[i].key);
+        h_sorted_arr[i].key = -1;
+        for (int j = 0; j < B; j++) {
+            h_sorted_arr[i].occurrences[j] = -1;
         }
     }
 
-    // Free device memory
+    for (int i=0; i<N/2; i++) h_input[i].key = h_input[N - i - 1].key;
+    for (int i=0; i<N; i++) printf("%d\n", h_input[i].key);
+
+    KeyValuePair *d_input;
+    SortedElement *d_sorted_arr;
+    int *d_keys, *d_indices;
+
+    cudaMalloc(&d_input, N * sizeof(KeyValuePair));
+    cudaMalloc(&d_sorted_arr, N * sizeof(SortedElement));
+    cudaMalloc(&d_keys, N * sizeof(int));
+    cudaMalloc(&d_indices, N * sizeof(int));
+
+    cudaMemcpy(d_input, h_input, N * sizeof(KeyValuePair), cudaMemcpyHostToDevice);
+    cudaMemcpy(d_sorted_arr, h_sorted_arr, N * sizeof(SortedElement), cudaMemcpyHostToDevice);
+
+    extractKeys<<<(N + 255) / 256, 256>>>(d_input, d_keys, d_indices, N);
+
+    sortKeys(d_keys, d_indices, N);
+
+    buildSortedArray<<<(N + 255) / 256, 256>>>(d_keys, d_indices, d_sorted_arr, N);
+
+    cudaMemcpy(h_sorted_arr, d_sorted_arr, N * sizeof(SortedElement), cudaMemcpyDeviceToHost);
+
+    // Print results
+    for (int i = 0; i < N; i++) {
+        if (h_sorted_arr[i].key == -1) break;
+        printf("Key: %d -> ", h_sorted_arr[i].key);
+        for (int j = 0; j < B; j++) {
+            if (h_sorted_arr[i].occurrences[j] != -1) {
+                printf("%d ", h_sorted_arr[i].occurrences[j]);
+            }
+        }
+        printf("\n");
+    }
+
     cudaFree(d_input);
-    cudaFree(d_sorted);
-    delete[] h_sorted;
+    cudaFree(d_sorted_arr);
+    cudaFree(d_keys);
+    cudaFree(d_indices);
 
     return 0;
 }
