@@ -28,11 +28,11 @@ typedef struct {
     int occurrences[MAX_OCCURENCES];
 } KeyOccurences;
 
-typedef struct{
-    keytype key;
-    int valueCount = 0;
-    valuetype values[MAX_VALUES];
-} TableElement;
+// typedef struct{
+//     keytype key;
+//     int valueCount = 0;
+//     valuetype values[MAX_VALUES];
+// } TableElement;
 
 // this function copies the keys and their indices and writes them in seperate arrays
 __global__ void extractKeys(KeyValuePair *input, int *keys, int *indices, int size) {

@@ -20,6 +20,7 @@ include_directories(${CMAKE_SOURCE_DIR}/include)
 # add_executable(compress src/compress.cu)
 # add_executable(thrust_sort_and_reduce src/thrust_sort_and_reduce.cu)
 add_executable(sort_and_filter_test src/sort_and_filter_test.cu)
+add_executable(sort_test src/sort_test.cu)
 
 # Link include directory for each executable
 # target_include_directories(indexing PUBLIC include)
@@ -27,6 +28,7 @@ add_executable(sort_and_filter_test src/sort_and_filter_test.cu)
 # target_include_directories(compress PUBLIC include)
 # target_include_directories(thrust_sort_and_reduce PUBLIC ${CMAKE_SOURCE_DIR}/include)
 target_include_directories(sort_and_filter_test PUBLIC ${CMAKE_SOURCE_DIR}/include)
+target_include_directories(sort_test PUBLIC ${CMAKE_SOURCE_DIR}/include)
 
 # Specify CUDA as a required language for each target
 # set_target_properties(thrust_sort_and_reduce PROPERTIES CUDA_SEPARABLE_COMPILATION ON)

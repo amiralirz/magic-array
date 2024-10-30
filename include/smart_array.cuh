@@ -1,6 +1,7 @@
 #pragma once
 
 #include <iostream>
+#include <cuda.h>
 #include "sort_and_filter.cuh"
 #include "peek.cuh"
 
@@ -26,21 +27,30 @@ class MagicArray{
         cudaFree(table);
     }
 
-    void insert(keytype* keys, valuetype* values, int size){
-        int* d_indices;
-        cudaMalloc(&d_indices, size* sizeof(int));
-        // keytype* d_keys_copy;
-        // cudaMalloc(&d_keys_copy, size* sizeof(keytype));
-        // cudaMemcpy(d_keys_copy, keys, size, cudaMemcpyDeviceToDevice);
-        fillIndices<<<(size + 1023)/1024, 1024>>>(d_indices, size);
+    // first sort the keys, then reduce it (using sort_and_filter.cuh methods)
+    void insert(keytype* h_keys, valuetype* h_values, int size) {
+        // Step 1: Allocate and initialize device arrays
+        keytype *d_keys;
+        int *d_indices;
+        cudaMalloc(&d_keys, size * sizeof(keytype));
+        cudaMalloc(&d_indices, size * sizeof(int));
+
+        // Copy host keys to device
+        cudaMemcpy(d_keys, h_keys, size * sizeof(keytype), cudaMemcpyHostToDevice);
+        fillIndices<<<(size + 255) / 256, 256>>>(d_indices, size); // Fill indices
+
+        // Step 2: Sort the keys and indices
+        sortKeys(d_keys, d_indices, size);
+
+        // Step 3: Aggregate the sorted keys and indices into the table
+        aggregateIndices<<<(size + 255) / 256, 256>>>(d_keys, d_indices, table, size);
         cudaDeviceSynchronize();
-        sortKeys(keys, d_indices, size);
-        peekMemory(keys, size);
-        cudaDeviceSynchronize();
-        // insertIntoTable<<<(size + 1023)/1024, 1024>>>(keys, d_indices, table, size, tableSize);
+
+        // Clean up
+        cudaFree(d_keys);
         cudaFree(d_indices);
-        return;
     }
+
 
     void find(keytype* keys, int size){
         return;
