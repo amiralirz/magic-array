@@ -28,13 +28,15 @@ typedef struct {
     int occurrences[MAX_OCCURENCES];
 } KeyOccurences;
 
-// this function copies the keys and their indices and writes them in seperate arrays
-__global__ void extractKeys(KeyValuePair *input, int *keys, int *indices, int size) {
+__global__ void fillTable(KeyOccurences *table, int size) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx < size) {
-        keys[idx] = input[idx].key;
-        indices[idx] = idx;
-    }
+        table[idx].key = -1;
+        table[idx].occurrenceCount = 0;
+        for(int i = 0;i<MAX_VALUES;i++){
+            table[idx].occurrences[i] = -1;
+        }
+    }   
 }
 
 __global__ void fillIndices(int *d_indices, int size) {
@@ -71,3 +73,15 @@ __global__ void aggregateIndices(int *keys, int *indices, KeyOccurences *output,
         }
     }
 }
+
+__global__ void findKeys(keytype* keys, int size, KeyOccurences* table, int tableSize, KeyOccurences* outputTable){ // WTF???
+    int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (idx < size){
+        for(int i = 0; i<tableSize; i++){
+            if (table[i].key == keys[idx]){
+                outputTable[idx] = table[i];
+            }
+        }
+    }
+}
+

@@ -7,7 +7,7 @@
 
 class MagicArray{
     private:
-    // TableElement *table;   
+    KeyOccurences *table;   
     int tableSize;     
     cudaError_t out;
 
@@ -54,6 +54,12 @@ class MagicArray{
 
 
     void find(keytype* keys, int size){
+        KeyOccurences* elements;
+        cudaMalloc(&elements, size * sizeof(KeyOccurences));
+        findKeys<<<(size+1023)/1024, 1024>>>(keys, size, table, tableSize, elements);
+        cudaDeviceSynchronize();
+        // peekMemory(elements, size);
+        cudaFree(elements);
         return;
     }
 

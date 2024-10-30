@@ -25,3 +25,15 @@ void peekMemory(KeyOccurences* devMem, int size){
     }
     free(hostMem);
 }
+
+// void peekMemory(TableElement* devMem, int size){
+//     TableElement* hostMem = (TableElement*)malloc(size * sizeof(TableElement));
+//     cudaMemcpy(hostMem, devMem, size * sizeof(TableElement), cudaMemcpyDeviceToHost);
+//     for(int i = 0;i<size; i++){
+//         std::cout<<hostMem[i].key<<" : ";
+//         for(int j = 0;hostMem[i].values[j] != -1 && j < MAX_OCCURENCES;j++)
+//             std::cout<<hostMem[i].values[j]<<" ";
+//         std::cout<<std::endl;
+//     }
+//     free(hostMem);
+// }
