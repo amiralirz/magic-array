@@ -6,7 +6,7 @@
 #include <cstdlib>
 #include <ctime>
 
-#define N 100000
+#define N 100
 #define MAX_OCCURRENCES 1000  // Max occurrences of each key
 
 struct KeyValuePair {
@@ -44,7 +44,7 @@ int main() {
     int h_keys[N];
     int h_indices[N];
     for (int i = 0; i < N; i++) {
-        h_keys[i] = std::rand() % (N / 100 + 1); // Repeat keys
+        h_keys[i] = std::rand() % (N / 10 + 1); // Repeat keys
         h_indices[i] = i;
     }
 
@@ -71,13 +71,9 @@ int main() {
     //     return a.key < b.key;
     // });
 
-    printf("here\n");
-
     // Copy back to host to print results
     std::vector<AggregatedElement> h_output(N);
     thrust::copy(d_output.begin(), d_output.end(), h_output.begin());
-
-    printf("there\n");
 
     // Print results (limited to first 10 for brevity)
     for (const auto &element : h_output) {
