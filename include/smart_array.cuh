@@ -6,7 +6,7 @@
 
 class MagicArray{
     private:
-    TableElement *table;   
+    KeyOccurences *table;   
     int tableSize;     
     cudaError_t out;
 
@@ -26,23 +26,17 @@ class MagicArray{
         cudaFree(table);
     }
 
-    void insert(keytype* keys, valuetype* values, int size){
-        int* d_indices;
-        cudaMalloc(&d_indices, size* sizeof(int));
-        // keytype* d_keys_copy;
-        // cudaMalloc(&d_keys_copy, size* sizeof(keytype));
-        // cudaMemcpy(d_keys_copy, keys, size, cudaMemcpyDeviceToDevice);
-        fillIndices<<<(size + 1023)/1024, 1024>>>(d_indices, size);
-        cudaDeviceSynchronize();
-        sortKeys(keys, d_indices, size);
-        peekMemory(keys, size);
-        cudaDeviceSynchronize();
-        // insertIntoTable<<<(size + 1023)/1024, 1024>>>(keys, d_indices, table, size, tableSize);
-        cudaFree(d_indices);
+    void insert(keytype* keys, int* indices, int size){
         return;
     }
 
     void find(keytype* keys, int size){
+        KeyOccurences* elements;
+        cudaMalloc(&elements, size * sizeof(KeyOccurences));
+        findKeys<<<(size+1023)/1024, 1024>>>(keys, size, table, tableSize, elements);
+        cudaDeviceSynchronize();
+        // peekMemory(elements, size);
+        cudaFree(elements);
         return;
     }
 

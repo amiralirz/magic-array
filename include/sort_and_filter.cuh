@@ -28,29 +28,13 @@ typedef struct {
     int occurrences[MAX_OCCURENCES];
 } KeyOccurences;
 
-typedef struct{
-    keytype key;
-    int valueCount = 0;
-    valuetype values[MAX_VALUES];
-} TableElement;
-
-// this function copies the keys and their indices and writes them in seperate arrays
-__global__ void extractKeys(KeyValuePair *input, int *keys, int *indices, int size) {
-    int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    if (idx < size) {
-        keys[idx] = input[idx].key;
-        indices[idx] = idx;
-    }
-}
-
-
-__global__ void fillTable(TableElement *table, int size) {
+__global__ void fillTable(KeyOccurences *table, int size) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx < size) {
         table[idx].key = -1;
-        table[idx].valueCount = -1;
+        table[idx].occurrenceCount = 0;
         for(int i = 0;i<MAX_VALUES;i++){
-            table[idx].values[i] = -1;
+            table[idx].occurrences[i] = -1;
         }
     }   
 }
@@ -105,3 +89,15 @@ __global__ void reduce(keytype *keys, int *indices, KeyOccurences *table, int si
         }
     }
 }
+
+__global__ void findKeys(keytype* keys, int size, KeyOccurences* table, int tableSize, KeyOccurences* outputTable){ // WTF???
+    int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (idx < size){
+        for(int i = 0; i<tableSize; i++){
+            if (table[i].key == keys[idx]){
+                outputTable[idx] = table[i];
+            }
+        }
+    }
+}
+
