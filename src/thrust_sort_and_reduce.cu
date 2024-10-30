@@ -4,8 +4,8 @@
 #include <thrust/reduce.h>
 #include <iostream>
 
-#define N 10                // size of input array
-#define MAX_OCCURRENCES 20  // Max occurrences of each key
+#define N 100'000                // size of input array
+#define MAX_OCCURRENCES 1000  // Max occurrences of each key
 
 struct KeyValuePair {
     int key;
@@ -38,12 +38,19 @@ __global__ void aggregateIndices(int *keys, int *indices, AggregatedElement *out
 }
 
 int main() {
-    int h_keys[N] = {2, 3, 3, 5, 19, 2, 3, 5, 5, 19};
+    // int h_keys[N] = {2, 3, 3, 5, 19, 2, 3, 5, 5, 19};
+    // int h_indices[N];
+    // for (int i = 0; i < N; i++) {
+    //     h_indices[i] = i;
+    // }
+    std::srand(std::time(0));
+    int h_keys[N]; 
     int h_indices[N];
-    for (int i = 0; i < N; i++) {
+
+    for (int i=0; i<N; i++){
+        h_keys[i] = std::rand() % (N / 100 + 1);   
         h_indices[i] = i;
     }
-
     // HD
     thrust::device_vector<int> d_keys(h_keys, h_keys + N);
     thrust::device_vector<int> d_indices(h_indices, h_indices + N);
@@ -67,13 +74,15 @@ int main() {
     thrust::copy(d_output.begin(), d_output.end(), h_output.begin());
 
     // Print results
-    for (const auto &element : h_output) {
-        if (element.key == -1) break;
-        std::cout << "Key: " << element.key << " -> Indices: ";
-        for (int i = 0; i < MAX_OCCURRENCES; i++) {
-            if (element.indices[i] != -1) std::cout << element.indices[i] << " ";
+    if (true){
+        for (const auto &element : h_output) {
+            if (element.key == -1) break;
+            std::cout << "Key: " << element.key << " -> Indices: ";
+            for (int i = 0; i < MAX_OCCURRENCES; i++) {
+                if (element.indices[i] != -1) std::cout << element.indices[i] << " ";
+            }
+            std::cout << std::endl;
         }
-        std::cout << std::endl;
     }
 
     return 0;
