@@ -1,55 +1,39 @@
 #include <iostream>
 #include <stdlib.h>
 #include <cuda.h>
-#include "sort_and_filter.cuh"
+#include "smart_array.cuh"
 #include "peek.cuh"
 
-#define N 128   // Array size
+#define N 32   // test input size
 
 int main() {
-    KeyValuePair h_input[N];
-    KeyOccurences h_sorted_arr[N];
+    keytype* h_keys = (keytype*)malloc(N * sizeof(keytype));
+    valuetype* h_values = (valuetype*)malloc(N * sizeof(valuetype));
 
     srand(0);
     // Initialize the input and sorted arrays
     for (int i = 0; i < N; i++) {
-        h_input[i].key = rand() % (N / 2); // limiting the values to ensure key repetition
-        // std::cout<<h_input[i].key<<" ";
-        h_sorted_arr[i].key = -1;
-        for (int j = 0; j < B; j++) {
-            h_sorted_arr[i].occurrences[j] = -1;
-        }
+        h_keys[i] = rand() % (N / 2); // limiting the values to ensure key repetition
     }
-    // std::cout<<std::endl;
-    KeyValuePair *d_input;
-    KeyOccurences *d_sorted_arr;
-    int *d_keys, *d_indices;
+    keytype* d_keys;
+    valuetype* d_values;
 
     // --------------------------- allocating GPU memory ---------------------------
-    cudaMalloc(&d_input, N * sizeof(KeyValuePair));
-    cudaMalloc(&d_sorted_arr, N * sizeof(KeyOccurences));
-    cudaMalloc(&d_keys, N * sizeof(int));
-    cudaMalloc(&d_indices, N * sizeof(int));
+    cudaMalloc(&d_keys, N * sizeof(keytype));
+    cudaMalloc(&d_values, N * sizeof(valuetype));
 
     // --------------------------- Moving data from RAM to GPU memory ---------------------------
-    cudaMemcpy(d_input, h_input, N * sizeof(KeyValuePair), cudaMemcpyHostToDevice);
-    cudaMemcpy(d_sorted_arr, h_sorted_arr, N * sizeof(KeyOccurences), cudaMemcpyHostToDevice);
+    cudaMemcpy(d_keys, h_keys, N * sizeof(keytype), cudaMemcpyHostToDevice);
+    cudaMemcpy(d_values, h_values, N * sizeof(valuetype), cudaMemcpyHostToDevice);
 
-    extractKeys<<<(N + 255) / 256, 256>>>(d_input, d_keys, d_indices, N);
-    // peekMemory(d_keys, N);
-    // peekMemory(d_indices, N);
+    MagicArray arr(10000);
+    arr.insert(d_keys, d_values, N);
+    // arr.printTable();
 
-    sortKeys(d_keys, d_indices, N);
-    // peekMemory(d_keys, N);
-
-    buildSortedArray<<<(N + 255) / 256, 256>>>(d_keys, d_indices, d_sorted_arr, N);
-    cudaDeviceSynchronize();
-    peekMemory(d_sorted_arr, N);
-
-    cudaFree(d_input);
-    cudaFree(d_sorted_arr);
+    free(h_keys);
+    free(h_values);
     cudaFree(d_keys);
-    cudaFree(d_indices);
+    cudaFree(d_values);
 
     return 0;
 }
