@@ -10,7 +10,7 @@
 #define MAX_VALUES 50
 
 using keytype = int;
-using valuetype = long;
+// using valuetype = long;
 
 typedef struct {
     keytype key;

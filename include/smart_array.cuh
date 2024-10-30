@@ -28,10 +28,10 @@ class MagicArray{
     }
 
     // first sort the keys, then reduce it (using sort_and_filter.cuh methods)
-    void insert(keytype* h_keys, valuetype* h_values, int size) {
+    void insert(keytype* h_keys, int* h_values, int size) {
         // Step 1: Allocate and initialize device arrays
         keytype *d_keys;
-        valuetype *d_values;
+        // int *d_values;
         int *d_indices;
         cudaMalloc(&d_keys, size * sizeof(keytype));
         cudaMalloc(&d_indices, size * sizeof(int));
@@ -67,20 +67,20 @@ class MagicArray{
         return;
     }
 
-    // void printTable(){
-    //     KeyOccurences* h_table = (KeyOccurences*)malloc(tableSize * sizeof(KeyOccurences));
-    //     cudaMemcpy(h_table, table, tableSize * sizeof(KeyOccurences), cudaMemcpyDeviceToHost);
-    //     for(int i = 0;i<tableSize;i++){
-    //         if(h_table[i].key != -1){
-    //             std::cout<<h_table[i].key<<" : ";
-    //             for(int j = 0;j<MAX_OCCURENCES;j++){
-    //                 if(h_table[i].occurrences[j] != -1){
-    //                     std::cout<<h_table[i].occurrences[j]<<" ";
-    //                 }
-    //             }
-    //             std::cout<<std::endl;
-    //         }
-    //     }
-    //     free(h_table);
-    // }
+    void printTable(){
+        KeyOccurences* h_table = (KeyOccurences*)malloc(tableSize * sizeof(KeyOccurences));
+        cudaMemcpy(h_table, table, tableSize * sizeof(KeyOccurences), cudaMemcpyDeviceToHost);
+        for(int i = 0;i<tableSize;i++){
+            if(h_table[i].key != -1){
+                std::cout<<h_table[i].key<<" : ";
+                for(int j = 0;j<MAX_OCCURENCES;j++){
+                    if(h_table[i].occurrences[j] != -1){
+                        std::cout<<h_table[i].occurrences[j]<<" ";
+                    }
+                }
+                std::cout<<std::endl;
+            }
+        }
+        free(h_table);
+    }
 };

@@ -19,14 +19,14 @@ int main() {
 
     // --------------------------- allocating GPU memory ---------------------------
     cudaMalloc(&d_keys, N * sizeof(keytype));
-    cudaMalloc(&d_indices, N * sizeof(valuetype));
+    cudaMalloc(&d_indices, N * sizeof(int));
 
     // --------------------------- Moving data from RAM to GPU memory ---------------------------
     cudaMemcpy(d_keys, h_keys, N * sizeof(keytype), cudaMemcpyHostToDevice);
 
     MagicArray arr(10000);
     arr.insert(d_keys, d_indices, N);
-    // arr.printTable();
+    arr.printTable();
 
     free(h_keys);
     cudaFree(d_keys);
